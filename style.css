@@ -1,0 +1,28 @@
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.game-app__list {
+    list-style: none;
+    font-size: 0;
+    display: table;
+    margin: 0 auto;
+    text-align: center;
+}
+.game-app__item {
+    display: inline-block;
+    vertical-align: top;
+    padding: 0 15px 30px;
+}
+
+.game-app__link {
+
+}
+
+.game-app__img {
+    display: block;
+    width: 96px;
+    height: 96px;
+}
