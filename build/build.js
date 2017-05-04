@@ -110,7 +110,6 @@ module.exports = function (view) {
 
     view.on('firstOpen', function (target, index) {
 
-        //console.log(index);
         let thisImg = model.getImgToIndex(index);
         view.openImg(target, thisImg);
     });
@@ -144,9 +143,6 @@ module.exports = function (view) {
         model.getSize().then(data => {
             let width = data.width <= 8 ? data.width : 8,
                 height = data.height <= 8 ? data.height : 8;
-
-            width = 2;
-            height = 2;
 
             view.render(width, height);
             model.saveData(width, height);
@@ -402,7 +398,6 @@ class View {
     }
 
     disableEvent() {
-        console.log(this.onHandle);
         DOMmethods.getId('container').removeEventListener('click', this.onHandle, true);
     }
 
