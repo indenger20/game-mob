@@ -42,22 +42,22 @@ module.exports = {
         return imagePath;
     },
     getMixArr(width, height) {
-        let allImg = mixImages( this.getImages() );
-        newArr = [];
-        let maxImg = allImg.length;
-        let counter = 0;
+        let allImg = this.getImages(),
+            newArr = [],
+            counter = 0;
 
         for(let i = 0; i < width*height/2; i++) {
             if( !allImg[counter] ) {
                 counter = 0;
+                newArr.push(allImg[counter]);
                 continue;
             }
-            newArr.push(allImg[counter]);
-            if ( allImg[counter] ){
+            if ( allImg[counter] ) {
+                newArr.push(allImg[counter]);
                 counter++;
             }
         };
-        return newArr;
+        return mixImages(newArr);
     },
     saveData(width, height) {
         let firstArr = this.getMixArr(width,height);
@@ -66,11 +66,20 @@ module.exports = {
         this.data = firstArr.concat(secondArr);
     },
     getData(index) {
-        let x = 0;
+        //let x = 0;
         return this.data;
     },
     getImgToIndex(index) {
         return this.data[index - 1];
+    },
+    isCheck(index1, index2) {
+        if( index1 == index2 ) {
+            return false;
+        }else if( this.getImgToIndex(index1) === this.getImgToIndex(index2) ) {
+            return true;
+        }else {
+            return false;
+        }
     }
 
 }

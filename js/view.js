@@ -1,17 +1,46 @@
 let eventObj = require('./static/eventObj');
 let DOMmethods = require('./static/DOMmethods');
 
-module.exports = function() {
-    var thet = this;
-    this.handlers = {};
+class View {
+    constructor() {
+        let thet = this;
+        let flag = false;
+        this.allLinks = null;
 
-    document.addEventListener('click', function(e) {
-        thet.trigger('check', e.target);
-    });
+        this.handlers = {};
 
+        this.onHandle = function(e = window.event) {
+            let $this = e.target;
 
-    this.render = function(width, height) {
+            if( $this.dataset.id ) {
+                let index = $this.dataset.id ? $this.dataset.id : null;
 
+                if(index) {
+                    let flag = index ? $this.classList.contains('active') : null;
+                    let firstOpen = thet.checkAllActive('active', thet.getAvailableLinks());
+
+                    if(!firstOpen && !flag) {
+                        thet.trigger('firstOpen', e.target, index);
+                    }else if( firstOpen && !flag ) {
+                        thet.trigger('doubleOpen', e.target, index, firstOpen);
+                    }
+                }
+
+                let closedElems = thet.getAvailableLinks();
+                if(!closedElems.length) {
+                    thet.trigger('finish');
+                }
+            }
+        }
+
+        this.offHandle = function(e = window.event) {
+            e.preventDefault();
+        }
+
+        DOMmethods.getId('container').addEventListener('click', this.onHandle, true);
+    }
+
+    render(width, height) {
         let list = document.createElement('ul');
         list.classList.add('game-app__list');
         let counter = 0;
@@ -41,16 +70,17 @@ module.exports = function() {
             list.appendChild(row);
         }
         DOMmethods.getId('container').appendChild(list);
-    },
+    }
 
-    this.on = function(event, fn) {
+    on(event, fn) {
         this.handlers[event] = this.handlers[event] || [];
 
         if (this.handlers[event].indexOf(fn) === -1) {
             this.handlers[event].push(fn);
         }
-    },
-    this.trigger = function(event) {
+    }
+
+    trigger(event) {
         if (this.handlers[event]) {
             var args = Array.prototype.slice.call(arguments, 1);
 
@@ -58,23 +88,72 @@ module.exports = function() {
                 fn.apply(null, args);
             });
         }
-    },
+    }
 
-    this.openImg = function(target, src, flag) {
-        console.log(target);
-        target.src = src;
-        target.parentNode.classList.add('active');
-    },
+    openImg(target, src, flag) {
+        target.children[0].src = src;
+        target.classList.add('active');
+    }
 
-    this.closeImg = function() {
-        let allImg = DOMmethods.getClass('game-app__link');
+    closeImg() {
+        let allImg = View.prototype.getAvailableLinks();
         for(let i = 0; i < allImg.length; i++) {
             allImg[i].classList.remove('active');
             allImg[i].children[0].src = 'image/default.png';
         }
     }
 
+    getAllLinks() {
+        return DOMmethods.getClass('game-app__link');
+    }
+
+    getAvailableLinks() {
+        let allElems = DOMmethods.getClass('game-app__link');
+        let filterElems = [];
+        for(let i = 0; i < allElems.length; i++) {
+            if( !allElems[i].classList.contains('isClose') ) {
+                filterElems.push(allElems[i]);
+            }
+        }
+        return filterElems;
+    }
+
+    checkAllActive(className, elems) {
+        let res = false;
+        for(let el of elems) {
+           if(el.classList.contains(className)) {
+               res = el.dataset.id;
+               break;
+           }
+        }
+        return res;
+    }
+
+    blockedImg(firstIndex, secondIndex) {
+        let allBlocks = View.prototype.getAllLinks();
+        for(let i = 0; i < allBlocks.length; i++) {
+            if( allBlocks[i].dataset.id == firstIndex || allBlocks[i].dataset.id == secondIndex ) {
+                allBlocks[i].classList.add('isClose');
+            }
+        }
+    }
+
+    removeGame() {
+        let elems = DOMmethods.getId('container').children;
+        for(let i = 0; i < elems.length; i++) {
+            elems[i].remove();
+        }
+    }
+
+    disableEvent() {
+        DOMmethods.getId('container').removeEventListener('click', this.onHandle, true);
+    }
+
+    enableEvent() {
+        DOMmethods.getId('container').addEventListener('click', this.onHandle, true);
+    }
+
+}
 
 
-
-};
+module.exports = View;
