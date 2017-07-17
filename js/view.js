@@ -27,11 +27,17 @@ class View {
                 }
 
                 let closedElems = thet.getAvailableLinks();
-                if(!closedElems.length) {
-                    thet.trigger('finish');
+                if(closedElems.length === 2) {
+                    setTimeout(()=> {
+                        let closedElems = thet.getAvailableLinks();
+                        if(!closedElems.length) {
+                            thet.trigger('finish');
+                        }
+                    }, 200)
                 }
+
             }
-        }
+        };
 
         this.offHandle = function(e = window.event) {
             e.preventDefault();

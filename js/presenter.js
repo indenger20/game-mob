@@ -7,30 +7,36 @@ module.exports = function (view) {
     let thet = this;
 
     view.on('firstOpen', function( target, index ) {
-
-        let thisImg = model.getImgToIndex(index);
-        view.openImg(target, thisImg);
-
+        model.getImgToIndex(index).then( data => {
+            view.openImg(target, data.img);
+        });
     });
 
     view.on('doubleOpen', function( target, index, prevIndex ) {
-
-        let thisImg = model.getImgToIndex(index);
-        let isCheck = model.isCheck(index, prevIndex);
-        view.openImg(target, thisImg);
-        if(isCheck) {
-            view.blockedImg(index, prevIndex);
-        }else {
-            view.disableEvent();
-            setTimeout(function () {
-                view.closeImg();
+        view.disableEvent();
+        model.getImgToIndex(index).then( data => {
+            view.openImg(target, data.img);
+            view.enableEvent();
+        });
+        model.isCheck(index,prevIndex).then(data=> {
+                let isCheck = data.flag;
+            if(isCheck) {
+                view.blockedImg(index, prevIndex);
                 view.enableEvent();
-            }, 500);
-        }
+            }else {
+                setTimeout(function () {
+                    view.closeImg();
+                    view.enableEvent();
+                }, 500);
+            }
+        })
+
+
 
     });
 
     view.on('finish', function() {
+        console.log('finish')
         thet.resetGame();
     });
 
@@ -44,9 +50,7 @@ module.exports = function (view) {
             let width = data.width <= 8 ? data.width : 8,
             height = data.height <= 8 ? data.height: 8;
 
-
             view.render(width, height);
-            model.saveData(width, height);
 
         });
     }

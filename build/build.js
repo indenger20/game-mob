@@ -17,85 +17,30 @@ DOMmethods.getId('btn').addEventListener('click', function (e) {
 },{"./presenter":3,"./static/DOMmethods":4,"./view":6}],2:[function(require,module,exports){
 let eventObj = require('./static/eventObj');
 
-function randomNumbers(a, b) {
-    return Math.random() - 0.5;
-};
-
-function mixImages(array) {
-    let counter = array.length;
-
-    // While there are elements in the array
-    while (counter > 0) {
-        // Pick a random index
-        let index = Math.floor(Math.random() * counter);
-
-        // Decrease counter by 1
-        counter--;
-
-        // And swap the last element with it
-        let temp = array[counter];
-        array[counter] = array[index];
-        array[index] = temp;
-    }
-
-    return array;
-}
-
 module.exports = {
-    data: [],
+
     getSize() {
         return new Promise((resolve, reject) => {
-            eventObj.ajaxGet('https://kde.link/test/get_field_size.php', function (data) {
+            eventObj.ajaxGet('size', function (data) {
                 resolve(data);
             });
         });
     },
-    getImages() {
-        var imagePath = [];
-        for (var i = 0; i < 10; i++) {
-            imagePath.push('https://kde.link/test/' + i + '.png');
-        }
-        return imagePath;
-    },
-    getMixArr(width, height) {
-        let allImg = this.getImages(),
-            newArr = [],
-            counter = 0;
 
-        for (let i = 0; i < width * height / 2; i++) {
-            if (!allImg[counter]) {
-                counter = 0;
-                newArr.push(allImg[counter]);
-                continue;
-            }
-            if (allImg[counter]) {
-                newArr.push(allImg[counter]);
-                counter++;
-            }
-        };
-        return mixImages(newArr);
-    },
-    saveData(width, height) {
-        let firstArr = this.getMixArr(width, height);
-        let secondArr = mixImages(firstArr.slice());
-
-        this.data = firstArr.concat(secondArr);
-    },
-    getData(index) {
-        //let x = 0;
-        return this.data;
-    },
     getImgToIndex(index) {
-        return this.data[index - 1];
+
+        return new Promise((resolve, reject) => {
+            eventObj.ajaxGet(`/imgToIndex?index=${index}`, function (data) {
+                resolve(data);
+            });
+        });
     },
     isCheck(index1, index2) {
-        if (index1 == index2) {
-            return false;
-        } else if (this.getImgToIndex(index1) === this.getImgToIndex(index2)) {
-            return true;
-        } else {
-            return false;
-        }
+        return new Promise((resolve, reject) => {
+            eventObj.ajaxGet(`/isCheck?index1=${index1}&index2=${index2}`, function (data) {
+                resolve(data);
+            });
+        });
     }
 
 };
@@ -109,28 +54,33 @@ module.exports = function (view) {
     let thet = this;
 
     view.on('firstOpen', function (target, index) {
-
-        let thisImg = model.getImgToIndex(index);
-        view.openImg(target, thisImg);
+        model.getImgToIndex(index).then(data => {
+            view.openImg(target, data.img);
+        });
     });
 
     view.on('doubleOpen', function (target, index, prevIndex) {
-
-        let thisImg = model.getImgToIndex(index);
-        let isCheck = model.isCheck(index, prevIndex);
-        view.openImg(target, thisImg);
-        if (isCheck) {
-            view.blockedImg(index, prevIndex);
-        } else {
-            view.disableEvent();
-            setTimeout(function () {
-                view.closeImg();
+        view.disableEvent();
+        model.getImgToIndex(index).then(data => {
+            view.openImg(target, data.img);
+            view.enableEvent();
+        });
+        model.isCheck(index, prevIndex).then(data => {
+            let isCheck = data.flag;
+            if (isCheck) {
+                view.blockedImg(index, prevIndex);
                 view.enableEvent();
-            }, 500);
-        }
+            } else {
+                setTimeout(function () {
+                    view.closeImg();
+                    view.enableEvent();
+                }, 500);
+            }
+        });
     });
 
     view.on('finish', function () {
+        console.log('finish');
         thet.resetGame();
     });
 
@@ -145,7 +95,6 @@ module.exports = function (view) {
                 height = data.height <= 8 ? data.height : 8;
 
             view.render(width, height);
-            model.saveData(width, height);
         });
     };
 
@@ -238,7 +187,7 @@ module.exports = {
 
     ajaxGet: function (url, callback) {
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', url);
+        xhr.open('GET', url, true);
         xhr.onreadystatechange = function () {
             if (this.readyState == 4) {
                 if (this.status == 200) callback(JSON.parse(this.responseText));
@@ -279,8 +228,13 @@ class View {
                 }
 
                 let closedElems = thet.getAvailableLinks();
-                if (!closedElems.length) {
-                    thet.trigger('finish');
+                if (closedElems.length === 2) {
+                    setTimeout(() => {
+                        let closedElems = thet.getAvailableLinks();
+                        if (!closedElems.length) {
+                            thet.trigger('finish');
+                        }
+                    }, 200);
                 }
             }
         };
